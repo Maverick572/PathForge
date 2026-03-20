@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import FoxMascot from '../components/FoxMascot'
 import { analyzeDocuments } from '../api/pathforge'
@@ -20,6 +20,9 @@ export default function Processing() {
   const [dots,       setDots]       = useState('.')
   const [error,      setError]      = useState<string | null>(null)
 
+  // Guard against React 18 Strict Mode double-invoking effects (which caused double Firestore writes)
+  const hasRun = useRef(false)
+
   useEffect(() => {
     let current = 0
     function next() {
@@ -38,6 +41,9 @@ export default function Processing() {
   }, [])
 
   useEffect(() => {
+    if (hasRun.current) return
+    hasRun.current = true
+
     async function run() {
       try {
         const resumeB64  = sessionStorage.getItem('resumeB64')  || ''
@@ -49,9 +55,9 @@ export default function Processing() {
           return
         }
 
-        const res  = await fetch(resumeB64)
-        const blob = await res.blob()
-        const file = new File([blob], resumeName, { type: blob.type })
+        const res    = await fetch(resumeB64)
+        const blob   = await res.blob()
+        const file   = new File([blob], resumeName, { type: blob.type })
         const result = await analyzeDocuments(file, jdText)
 
         if ((result as any).error) {
@@ -62,7 +68,7 @@ export default function Processing() {
         // Always store in sessionStorage (fast access)
         sessionStorage.setItem('analysisResult', JSON.stringify(result))
 
-        // Also persist to Firestore for history
+        // Persist to Firestore for history (guarded — runs exactly once)
         if (user?.uid) {
           try {
             const id = await saveAnalysis(user.uid, result)
