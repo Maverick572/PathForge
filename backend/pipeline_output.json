@@ -1,0 +1,270 @@
+{
+  "candidateName": "Ashwath Ranjith",
+  "targetRole": "UI/UX Designer",
+  "matchScore": 71,
+  "matchedSkills": [
+    {
+      "name": "Python",
+      "level": "advanced",
+      "category": "Programming"
+    },
+    {
+      "name": "JavaScript",
+      "level": "advanced",
+      "category": "Programming"
+    },
+    {
+      "name": "NLP",
+      "level": "advanced",
+      "category": "NLP"
+    },
+    {
+      "name": "Computer Vision",
+      "level": "advanced",
+      "category": "ML"
+    },
+    {
+      "name": "React",
+      "level": "advanced",
+      "category": "Frontend"
+    },
+    {
+      "name": "PostgreSQL",
+      "level": "advanced",
+      "category": "Database"
+    },
+    {
+      "name": "MySQL",
+      "level": "advanced",
+      "category": "Database"
+    },
+    {
+      "name": "REST APIs",
+      "level": "advanced",
+      "category": "Backend"
+    },
+    {
+      "name": "GitHub",
+      "level": "intermediate",
+      "category": "Tools"
+    },
+    {
+      "name": "CSS",
+      "level": "beginner",
+      "category": "Frontend"
+    },
+    {
+      "name": "HTML",
+      "level": "beginner",
+      "category": "Frontend"
+    },
+    {
+      "name": "Java",
+      "level": "advanced",
+      "category": "Programming"
+    },
+    {
+      "name": "C++",
+      "level": "advanced",
+      "category": "Programming"
+    },
+    {
+      "name": "C#",
+      "level": "advanced",
+      "category": "Programming"
+    },
+    {
+      "name": "R",
+      "level": "beginner",
+      "category": "Programming"
+    }
+  ],
+  "gapSkills": [
+    {
+      "name": "Agile",
+      "score": 0.2877,
+      "priority": "high",
+      "level": "beginner",
+      "category": "Practices"
+    },
+    {
+      "name": "HCI",
+      "score": 0.302,
+      "priority": "high",
+      "level": "beginner",
+      "category": "Design"
+    },
+    {
+      "name": "Figma",
+      "score": 0.3394,
+      "priority": "high",
+      "level": "beginner",
+      "category": "Design"
+    },
+    {
+      "name": "Adobe XD",
+      "score": 0.3658,
+      "priority": "medium",
+      "level": "beginner",
+      "category": "Design"
+    },
+    {
+      "name": "Sketch",
+      "score": 0.3872,
+      "priority": "medium",
+      "level": "beginner",
+      "category": "Design"
+    },
+    {
+      "name": "Google Analytics",
+      "score": 0.4287,
+      "priority": "low",
+      "level": "intermediate",
+      "category": "Analytics"
+    }
+  ],
+  "roadmap": {
+    "candidate_name": "Ashwath Ranjith",
+    "target_role": "UI/UX Designer",
+    "match_score": 71,
+    "total_weeks": 6,
+    "high_weeks": 1,
+    "medium_weeks": 5,
+    "low_weeks": 0,
+    "nodes": [
+      {
+        "id": "node_00",
+        "skill": "Agile",
+        "priority": "high",
+        "gap_score": 0.2877,
+        "week_start": 1,
+        "week_end": 1,
+        "duration_weeks": 1.0,
+        "course_id": null,
+        "course_title": null,
+        "description": "Build practical skills in Agile.",
+        "prerequisites": [],
+        "unlocked_by": [],
+        "category": "Technical",
+        "is_prerequisite_only": false,
+        "resources": [
+          {
+            "title": "Agile Fundamentals \u2013 Scrum Alliance",
+            "url": "https://resources.scrumalliance.org/Article/agile-basics",
+            "type": "free",
+            "platform": "Scrum Alliance"
+          },
+          {
+            "title": "Agile Project Management \u2013 Google on Coursera",
+            "url": "https://www.coursera.org/learn/agile-project-management",
+            "type": "freemium",
+            "platform": "Coursera"
+          }
+        ]
+      },
+      {
+        "id": "node_01",
+        "skill": "HCI",
+        "priority": "medium",
+        "gap_score": 0.302,
+        "week_start": 2,
+        "week_end": 2,
+        "duration_weeks": 1.0,
+        "course_id": null,
+        "course_title": null,
+        "description": "Build practical skills in HCI.",
+        "prerequisites": [],
+        "unlocked_by": [],
+        "category": "Technical",
+        "is_prerequisite_only": false,
+        "resources": []
+      },
+      {
+        "id": "node_02",
+        "skill": "Figma",
+        "priority": "medium",
+        "gap_score": 0.3394,
+        "week_start": 3,
+        "week_end": 3,
+        "duration_weeks": 1.0,
+        "course_id": null,
+        "course_title": null,
+        "description": "Build practical skills in Figma.",
+        "prerequisites": [],
+        "unlocked_by": [],
+        "category": "Technical",
+        "is_prerequisite_only": false,
+        "resources": []
+      },
+      {
+        "id": "node_03",
+        "skill": "Adobe XD",
+        "priority": "medium",
+        "gap_score": 0.3658,
+        "week_start": 4,
+        "week_end": 4,
+        "duration_weeks": 1.0,
+        "course_id": null,
+        "course_title": null,
+        "description": "Build practical skills in Adobe XD.",
+        "prerequisites": [],
+        "unlocked_by": [],
+        "category": "Technical",
+        "is_prerequisite_only": false,
+        "resources": []
+      },
+      {
+        "id": "node_04",
+        "skill": "Sketch",
+        "priority": "medium",
+        "gap_score": 0.3872,
+        "week_start": 5,
+        "week_end": 5,
+        "duration_weeks": 1.0,
+        "course_id": null,
+        "course_title": null,
+        "description": "Build practical skills in Sketch.",
+        "prerequisites": [],
+        "unlocked_by": [],
+        "category": "Technical",
+        "is_prerequisite_only": false,
+        "resources": []
+      },
+      {
+        "id": "node_05",
+        "skill": "Google Analytics",
+        "priority": "medium",
+        "gap_score": 0.4287,
+        "week_start": 6,
+        "week_end": 6,
+        "duration_weeks": 1,
+        "course_id": null,
+        "course_title": null,
+        "description": "Funnel analysis, event tracking, and audience insights on GA4.",
+        "prerequisites": [],
+        "unlocked_by": [],
+        "category": "Analytics",
+        "is_prerequisite_only": false,
+        "resources": []
+      }
+    ],
+    "known_skills": [
+      "Python",
+      "JavaScript",
+      "NLP",
+      "Computer Vision",
+      "React",
+      "PostgreSQL",
+      "MySQL",
+      "REST APIs",
+      "GitHub",
+      "CSS",
+      "HTML",
+      "Java",
+      "C++",
+      "C#",
+      "R"
+    ],
+    "summary": "Ashwath Ranjith has 15 matched skills and 6 skill gaps for the UI/UX Designer role. 1 gaps are high priority (learn immediately), 5 are medium priority (bridge while applying). Estimated completion: 6 weeks."
+  }
+}

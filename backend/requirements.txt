@@ -1,0 +1,24 @@
+# ── Core ML ───────────────────────────────────────────────────────────────────
+torch>=2.0.0                  # tensor ops + GPU training
+transformers>=4.38.0          # BERT, Trainer, pipeline
+sentence-transformers>=2.6.0  # all-MiniLM-L6-v2 embeddings
+
+# ── Evaluation ────────────────────────────────────────────────────────────────
+seqeval>=1.2.2                # span-level NER metrics
+
+# ── Data + numerics ───────────────────────────────────────────────────────────
+scikit-learn>=1.3.0           # cosine_similarity
+pandas>=2.0.0                 # CSV / Excel loading
+numpy>=1.24.0                 # array ops
+openpyxl>=3.1.0               # pandas.read_excel support
+
+# ── API / Backend ─────────────────────────────────────────────────────────────
+fastapi>=0.110.0
+uvicorn>=0.29.0
+python-multipart>=0.0.9       # required for Form data
+
+# ── NOT included (add later if needed) ────────────────────────────────────────
+# peft                  — LoRA fine-tuning (Phase 3+)
+# accelerate            — multi-GPU / better device handling
+# wandb                 — experiment tracking
+# tqdm                  — optional progress bars
