@@ -160,18 +160,6 @@ export default function Landing() {
             >
               {user ? 'Go to Dashboard →' : 'Start your pathway →'}
             </button>
-            <button
-              onClick={() => document.getElementById('how')?.scrollIntoView({ behavior: 'smooth' })}
-              style={{
-                background: 'transparent', color: 'var(--muted)',
-                border: '1px solid var(--border)',
-                padding: '16px 28px', borderRadius: 12,
-                fontFamily: "'DM Sans', sans-serif",
-                fontWeight: 500, fontSize: 15, cursor: 'pointer',
-              }}
-            >
-              ▶ See how it works
-            </button>
           </div>
         </div>
 
@@ -249,68 +237,10 @@ export default function Landing() {
         ))}
       </div>
 
-      {/* ── HOW IT WORKS ── */}
-      <section id="how" style={{ position: 'relative', zIndex: 1, padding: '100px 48px' }}>
-        <span className="reveal" style={{
-          fontSize: 11, fontWeight: 600, letterSpacing: 2,
-          textTransform: 'uppercase', color: 'var(--cyan)',
-          marginBottom: 16, display: 'block',
-        }}>The process</span>
-        <h2 className="reveal" style={{
-          fontFamily: "'Syne', sans-serif",
-          fontSize: 'clamp(32px, 4vw, 52px)',
-          fontWeight: 800, letterSpacing: '-1.5px',
-          lineHeight: 1.1, marginBottom: 16,
-        }}>
-          Three steps to your<br />personalized pathway
-        </h2>
-        <p className="reveal" style={{
-          fontSize: 16, color: 'var(--muted)', maxWidth: 480,
-          lineHeight: 1.7, fontWeight: 300, marginBottom: 64,
-        }}>
-          No guesswork. No generic curriculum. Just the exact learning you need, in the right order.
-        </p>
-
-        <div className="reveal" style={{
-          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 2, background: 'var(--border)',
-          border: '1px solid var(--border)', borderRadius: 16, overflow: 'hidden',
-        }}>
-          {[
-            { num: '01', icon: '📄', title: 'Upload your resume & JD', desc: 'Drop in your resume and the target job description. PathForge extracts every skill, experience level, and competency signal — automatically.' },
-            { num: '02', icon: '🧠', title: 'AI maps your skill gap', desc: 'Our engine cross-references what you know against what the role demands. Every gap is scored, prioritized, and mapped to your learning path.' },
-            { num: '03', icon: '🗺', title: 'Follow your roadmap', desc: 'Your personalized graph roadmap builds live — node by node. Click any module to see resources, estimated time, and why it matters for your role.' },
-          ].map(step => (
-            <div key={step.num} style={{
-              background: 'var(--navy)', padding: '44px 36px',
-              transition: 'background 0.3s',
-            }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'var(--navy2)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'var(--navy)')}
-            >
-              <div style={{
-                fontFamily: "'Syne', sans-serif",
-                fontSize: 72, fontWeight: 800,
-                color: 'rgba(139,92,246,0.12)',
-                lineHeight: 1, marginBottom: 24, letterSpacing: '-3px',
-              }}>{step.num}</div>
-              <div style={{ fontSize: 22, marginBottom: 20 }}>{step.icon}</div>
-              <div style={{
-                fontFamily: "'Syne', sans-serif",
-                fontSize: 20, fontWeight: 700, marginBottom: 12,
-              }}>{step.title}</div>
-              <p style={{ fontSize: 14, color: 'var(--muted)', lineHeight: 1.7, fontWeight: 300 }}>
-                {step.desc}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* ── CTA ── */}
       <div className="reveal" style={{
         position: 'relative', zIndex: 1,
-        margin: '0 48px 80px',
+        margin: '80px 48px',
         borderRadius: 24, overflow: 'hidden',
         background: 'var(--navy2)',
         border: '1px solid rgba(139,92,246,0.25)',
@@ -352,7 +282,7 @@ export default function Landing() {
         position: 'relative', zIndex: 1,
         padding: '32px 48px',
         borderTop: '1px solid var(--border)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         <div style={{
           fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 18,
@@ -360,10 +290,6 @@ export default function Landing() {
         }}>
           Path<span style={{ color: 'var(--cyan)' }}>Forge</span>
         </div>
-        <p style={{ fontSize: 13, color: 'var(--muted)' }}>
-          Built for ARTPARK CodeForge Hackathon · AI Adaptive Onboarding Engine
-        </p>
-        <p style={{ fontSize: 12, color: 'var(--muted)' }}>React · FastAPI · TailwindCSS</p>
       </footer>
 
       <style>{`

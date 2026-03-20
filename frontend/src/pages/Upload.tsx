@@ -35,7 +35,6 @@ export default function Upload() {
   function handleAnalyze() {
     if (!resumeFile) return
 
-    // Read file as base64 and store in sessionStorage so Processing page can send it
     const reader = new FileReader()
     reader.onload = () => {
       sessionStorage.setItem('resumeB64',  reader.result as string)
@@ -65,11 +64,30 @@ export default function Upload() {
 
       <Navbar />
 
+      {/* Back button */}
+      <div style={{ position: 'relative', zIndex: 1, padding: '88px 48px 0' }}>
+        <button
+          onClick={() => navigate('/dashboard')}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: 'var(--muted)',
+            fontSize: 14, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 6,
+            padding: '8px 0',
+            transition: 'color 0.2s',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.color = 'var(--white)')}
+          onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
+        >
+          ← Back to Dashboard
+        </button>
+      </div>
+
       <div style={{
         position: 'relative', zIndex: 1,
-        minHeight: '100vh',
         display: 'flex', alignItems: 'center',
-        padding: '100px 48px 60px',
+        padding: '32px 48px 60px',
         gap: 80,
       }}>
 

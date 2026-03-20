@@ -1,20 +1,8 @@
-// src/pages/Roadmap3D.tsx  v6.0
-// ─────────────────────────────────────────────────────────────────────────────
-// [A] ROOT CAUSE SCROLL FIX — wheel/touch useEffects depend on [loading] so
-//     listeners attach AFTER the scene div mounts (containerRef was null during
-//     the loading spinner, causing wheel events to never register).
-// [B] DRAGGABLE SCRUBBER — bottom bar is mouse-draggable + click-to-jump.
-//     Node tick marks on the track. Skill labels clickable below.
-// [C] HOVER TOOLTIP — lightweight fixed card on mouseEnter with top 3 resources
-//     (course / dataset / docs icons). Click still opens full detail panel.
-// [D] FLATTER PATH — VH=560, Y only 35%→65% so path is gently diagonal,
-//     not corner-to-corner steep.
-// [E] CLEAN TOP BAR — two-row layout, no overflow, pills on second row.
-// [F] RESOURCES NOW FROM BACKEND — skill_resources.py drives all course/docs/
-//     video links. Hardcoded SKILL_RESOURCES dict removed. getResources()
-//     reads node.resources[] injected by roadmap_engine.py at build time.
-//     course_title in detail panel is now a clickable ↗ link.
-// ─────────────────────────────────────────────────────────────────────────────
+// src/pages/Roadmap3D.tsx  v6.1
+// Changes from v6.0:
+// - Removed "scroll or drag bar" pill
+// - Removed Pin feature entirely
+// - Added "← Dashboard" back button top-left (below navbar)
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -27,11 +15,7 @@ import type { RoadmapTimeline, RoadmapNode } from '../api/pathforge'
 
 type Resource = { label: string; url: string; free: boolean; type?: 'course'|'dataset'|'docs'|'video' }
 
-// ── Convert backend resources (from skill_resources.py) to frontend Resource shape ──
-// Backend shape: { title, url, type ("free"|"paid"|"freemium"), platform }
-// Frontend shape: { label, url, free, type ("course"|"dataset"|"docs"|"video") }
 function backendToResource(r: {title:string; url:string; type:string; platform:string}): Resource {
-  // Infer display type from platform / url keywords
   let displayType: Resource['type'] = 'course'
   const u = r.url.toLowerCase()
   const p = (r.platform ?? '').toLowerCase()
@@ -46,16 +30,9 @@ function backendToResource(r: {title:string; url:string; type:string; platform:s
     u.includes('paperswithcode.com/datasets') || u.includes('opendata') ||
     u.includes('huggingface.co/datasets') || u.includes('registry.opendata')
   ) displayType = 'dataset'
-
-  return {
-    label: r.title,
-    url:   r.url,
-    free:  r.type === 'free' || r.type === 'freemium',
-    type:  displayType,
-  }
+  return { label: r.title, url: r.url, free: r.type === 'free' || r.type === 'freemium', type: displayType }
 }
 
-// Return resources for a node — prefers backend resources, falls back to empty
 function getResources(node: RoadmapNode): Resource[] {
   if (node.resources && node.resources.length > 0) {
     return node.resources.map(backendToResource).slice(0, 4)
@@ -71,29 +48,12 @@ const PC = {
   low:    { border: '#6b7280', bg: 'rgba(107,114,128,0.1)',  glow: 'rgba(107,114,128,0.25)',text: '#9ca3af', ring: 'rgba(107,114,128,0.3)'  },
 }
 
-// [D] Flatter path
 const VW = 3400
-const VH = 560
+const VH = 420
+const PATH_Y = VH * 0.5   // perfectly centred horizontal line
 
 function getPathPoint(t: number) {
-  const pts = [
-    { x: VW * 0.02, y: VH * 0.65 },
-    { x: VW * 0.17, y: VH * 0.59 },
-    { x: VW * 0.32, y: VH * 0.52 },
-    { x: VW * 0.49, y: VH * 0.48 },
-    { x: VW * 0.64, y: VH * 0.44 },
-    { x: VW * 0.80, y: VH * 0.40 },
-    { x: VW * 0.96, y: VH * 0.36 },
-  ]
-  const seg = t * (pts.length - 1)
-  const i   = Math.min(Math.floor(seg), pts.length - 2)
-  const f   = seg - i
-  const p0  = pts[Math.max(0, i-1)], p1 = pts[i], p2 = pts[i+1]
-  const p3  = pts[Math.min(pts.length-1, i+2)]
-  return {
-    x: 0.5*(2*p1.x+(-p0.x+p2.x)*f+(2*p0.x-5*p1.x+4*p2.x-p3.x)*f*f+(-p0.x+3*p1.x-3*p2.x+p3.x)*f*f*f),
-    y: 0.5*(2*p1.y+(-p0.y+p2.y)*f+(2*p0.y-5*p1.y+4*p2.y-p3.y)*f*f+(-p0.y+3*p1.y-3*p2.y+p3.y)*f*f*f),
-  }
+  return { x: VW * 0.02 + t * (VW * 0.96), y: PATH_Y }
 }
 
 function nodeT(i: number, n: number) { return n <= 1 ? 0.45 : 0.07 + (i/(n-1))*0.78 }
@@ -101,29 +61,40 @@ function nodeT(i: number, n: number) { return n <= 1 ? 0.45 : 0.07 + (i/(n-1))*0
 function drawRoad(canvas: HTMLCanvasElement, nodes: RoadmapNode[]) {
   const ctx = canvas.getContext('2d'); if (!ctx) return
   canvas.width = VW; canvas.height = VH; ctx.clearRect(0,0,VW,VH)
-  const S = 600
-  const pts = Array.from({length:S+1},(_,i)=>getPathPoint(i/S))
-  const sp = (w:number,style:string,blur=0,alpha=1)=>{
-    ctx.save();ctx.globalAlpha=alpha;if(blur)ctx.filter=`blur(${blur}px)`
-    ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);pts.forEach(p=>ctx.lineTo(p.x,p.y))
-    ctx.strokeStyle=style;ctx.lineWidth=w;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();ctx.restore()
+
+  const x0 = VW * 0.02, x1 = VW * 0.98, y = PATH_Y
+
+  // Road base layers
+  const road = (w:number, style:string, blur=0, alpha=1) => {
+    ctx.save(); ctx.globalAlpha=alpha
+    if (blur) ctx.filter=`blur(${blur}px)`
+    ctx.beginPath(); ctx.moveTo(x0,y); ctx.lineTo(x1,y)
+    ctx.strokeStyle=style; ctx.lineWidth=w; ctx.lineCap='round'; ctx.stroke(); ctx.restore()
   }
-  sp(50,'rgba(0,0,0,0.9)');sp(34,'#070915');sp(38,'rgba(124,58,237,0.13)',4)
-  const n=nodes.length
-  if(n>0){
-    const fm=nodes.findIndex(nd=>nd.priority!=='high')
-    const fl=nodes.findIndex(nd=>nd.priority==='low')
-    const he=fm>0?Math.floor(nodeT(fm-1,n)*S):Math.floor(nodeT(n-1,n)*S)
-    const me=fl>0?Math.floor(nodeT(fl-1,n)*S):he
-    const seg=(a:number,b:number,col:string)=>{
-      if(a>=b)return
-      const sl=pts.slice(a,b+1);if(sl.length<2)return
-      ctx.save();ctx.beginPath();ctx.moveTo(sl[0].x,sl[0].y);sl.forEach(p=>ctx.lineTo(p.x,p.y))
-      ctx.strokeStyle=col;ctx.lineWidth=5;ctx.stroke()
-      ctx.filter='blur(10px)';ctx.globalAlpha=0.35;ctx.lineWidth=18;ctx.strokeStyle=col;ctx.stroke();ctx.restore()
+  road(50,'rgba(0,0,0,0.9)'); road(34,'#070915'); road(38,'rgba(124,58,237,0.13)',4)
+
+  const n = nodes.length
+  if (n > 0) {
+    const fm = nodes.findIndex(nd=>nd.priority!=='high')
+    const fl = nodes.findIndex(nd=>nd.priority==='low')
+    const hEnd = fm>0 ? nodeT(fm-1,n) : nodeT(n-1,n)
+    const mEnd = fl>0 ? nodeT(fl-1,n) : hEnd
+
+    const seg = (tA:number, tB:number, col:string) => {
+      if (tA >= tB) return
+      const xa = x0 + tA*(x1-x0), xb = x0 + tB*(x1-x0)
+      ctx.save()
+      ctx.beginPath(); ctx.moveTo(xa,y); ctx.lineTo(xb,y)
+      ctx.strokeStyle=col; ctx.lineWidth=5; ctx.lineCap='round'; ctx.stroke()
+      ctx.filter='blur(10px)'; ctx.globalAlpha=0.35; ctx.lineWidth=18; ctx.strokeStyle=col; ctx.stroke()
+      ctx.restore()
     }
-    seg(0,he,'#ef4444');seg(he,me,'#f59e0b');seg(me,S,'#8b5cf6')
-  } else sp(5,'rgba(139,92,246,0.4)')
+    seg(0,    hEnd, '#ef4444')
+    seg(hEnd, mEnd, '#f59e0b')
+    seg(mEnd, 1,    '#8b5cf6')
+  } else {
+    road(5,'rgba(139,92,246,0.4)')
+  }
 }
 
 export default function Roadmap3D() {
@@ -139,7 +110,6 @@ export default function Roadmap3D() {
   const [doneIds,   setDoneIds]   = useState<Set<string>>(new Set())
   const [scrollPct, setScrollPct] = useState(0)
   const [tab,       setTab]       = useState<'info'|'links'>('info')
-  const [pinned,    setPinned]    = useState(false)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef    = useRef<HTMLCanvasElement>(null)
@@ -189,7 +159,7 @@ export default function Roadmap3D() {
   const redraw=useCallback(()=>{if(canvasRef.current&&nodesRef.current.length)drawRoad(canvasRef.current,nodesRef.current)},[])
   useEffect(()=>{redraw()},[timeline,redraw])
 
-  // Lerp
+  // Lerp animation
   useEffect(()=>{
     const loop=()=>{
       const dx=tPanX.current-panX.current,dy=tPanY.current-panY.current
@@ -200,7 +170,7 @@ export default function Roadmap3D() {
     return ()=>cancelAnimationFrame(animRef.current)
   },[])
 
-  // [A] CRITICAL FIX: wheel listener gated on [loading] — attaches after scene mounts
+  // Wheel scroll
   useEffect(()=>{
     if(loading)return
     const el=containerRef.current;if(!el)return
@@ -209,7 +179,7 @@ export default function Roadmap3D() {
     return ()=>el.removeEventListener('wheel',fn)
   },[loading,goTo])
 
-  // Touch — also gated on [loading]
+  // Touch scroll
   useEffect(()=>{
     if(loading)return
     const el=containerRef.current;if(!el)return
@@ -225,7 +195,7 @@ export default function Roadmap3D() {
     return ()=>{el.removeEventListener('touchstart',ts);el.removeEventListener('touchmove',tm)}
   },[loading,goTo])
 
-  // [B] Draggable scrubber — also gated on [loading]
+  // Draggable scrubber
   useEffect(()=>{
     if(loading)return
     const track=scrubRef.current;if(!track)return
@@ -278,27 +248,40 @@ export default function Roadmap3D() {
       <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"/>
       <Navbar/>
 
-      {/* [E] TOP BAR — two rows */}
+      {/* TOP BAR */}
       <div style={{position:'fixed',top:64,left:0,right:0,zIndex:20,background:'rgba(6,8,15,0.97)',borderBottom:'1px solid rgba(255,255,255,0.04)',backdropFilter:'blur(12px)'}}>
+        {/* Row 1 */}
         <div style={{padding:'10px 24px 0',display:'flex',alignItems:'center',justifyContent:'space-between',gap:16}}>
-          <div>
+          {/* Back button — top-left */}
+          <button
+            onClick={()=>navigate('/dashboard')}
+            style={{background:'transparent',border:'none',color:'#4b5563',fontSize:13,cursor:'pointer',display:'flex',alignItems:'center',gap:5,padding:'4px 0',fontFamily:"'DM Sans',sans-serif",transition:'color 0.15s',flexShrink:0}}
+            onMouseEnter={e=>(e.currentTarget.style.color='#9ca3af')}
+            onMouseLeave={e=>(e.currentTarget.style.color='#4b5563')}
+          >
+            ← Dashboard
+          </button>
+
+          {/* Centre title */}
+          <div style={{textAlign:'center',flex:1}}>
             <div style={{fontFamily:"'Syne',sans-serif",fontSize:16,fontWeight:800,color:'#f8fafc',letterSpacing:'-0.3px'}}>{candidate_name}'s Roadmap</div>
             <div style={{fontSize:10,color:'#374151',fontFamily:"'IBM Plex Mono',monospace",marginTop:1}}>{target_role} · {nodes.length} skills · {total_weeks}w · {match_score}% match</div>
           </div>
-          <div style={{display:'flex',alignItems:'center',gap:8,minWidth:140}}>
+
+          {/* Progress bar — right */}
+          <div style={{display:'flex',alignItems:'center',gap:8,minWidth:140,flexShrink:0}}>
             <div style={{flex:1,height:4,background:'rgba(255,255,255,0.05)',borderRadius:2,overflow:'hidden'}}>
               <div style={{height:'100%',width:`${pct}%`,background:'linear-gradient(90deg,#10b981,#8b5cf6)',borderRadius:2,transition:'width 0.5s'}}/>
             </div>
             <span style={{fontSize:10,color:'#10b981',fontFamily:"'IBM Plex Mono',monospace",whiteSpace:'nowrap'}}>{pct}%</span>
           </div>
         </div>
+
+        {/* Row 2 — pills only (no pin, no scroll hint) */}
         <div style={{padding:'7px 24px 9px',display:'flex',alignItems:'center',gap:7,flexWrap:'wrap'}}>
           <Pill color="#34d399" bg="rgba(16,185,129,0.07)">{doneCount}/{nodes.length} done</Pill>
           <Pill color="#fca5a5" bg="rgba(239,68,68,0.07)">{highN} urgent</Pill>
-          <Pill color="#8b5cf6" bg="rgba(139,92,246,0.07)">scroll or drag bar</Pill>
           <div style={{flex:1}}/>
-          <button onClick={()=>setPinned(p=>!p)} style={{background:pinned?'rgba(245,158,11,0.16)':'transparent',border:'1px solid rgba(245,158,11,0.28)',color:'#f59e0b',padding:'4px 11px',borderRadius:6,fontSize:10,fontWeight:700,cursor:'pointer',fontFamily:"'IBM Plex Mono',monospace"}}>{pinned?'✓ Pinned':'📌 Pin'}</button>
-          <button onClick={()=>navigate('/skillgap')} style={{background:'transparent',border:'1px solid rgba(255,255,255,0.07)',color:'#4b5563',padding:'4px 10px',borderRadius:6,fontSize:10,cursor:'pointer'}}>← Skill Gap</button>
         </div>
       </div>
 
@@ -338,28 +321,44 @@ export default function Roadmap3D() {
             )
           })}
 
-          {/* Start */}
-          {(()=>{const s=getPathPoint(0);return(
-            <div style={{position:'absolute',left:s.x-19,top:s.y-82,zIndex:9}}>
-              <div style={{position:'absolute',bottom:0,left:'50%',transform:'translateX(-50%)',width:2,height:56,background:'linear-gradient(to top,#10b981,transparent)',borderRadius:2}}/>
-              <div style={{position:'absolute',bottom:48,left:'50%',transform:'translateX(-50%)',width:36,height:36,borderRadius:'50%',background:'rgba(16,185,129,0.09)',border:'1.5px solid #10b981',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15}}>🚀</div>
-              <div style={{position:'absolute',bottom:88,left:'50%',transform:'translateX(-50%)',whiteSpace:'nowrap',fontSize:9,fontWeight:700,color:'#10b981',fontFamily:"'IBM Plex Mono',monospace",letterSpacing:1}}>START</div>
-            </div>
-          )})()}
-
-          {/* Goal */}
-          {(()=>{const d=getPathPoint(1);return(
-            <div style={{position:'absolute',left:d.x-24,top:d.y-158,zIndex:9,animation:'nfloat 3.5s ease-in-out infinite'}}>
-              <div style={{position:'absolute',bottom:-8,left:'50%',transform:'translateX(-50%)',width:34,height:9,background:'rgba(245,158,11,0.1)',borderRadius:'50%',filter:'blur(5px)'}}/>
-              <div style={{position:'absolute',bottom:0,left:'50%',transform:'translateX(-50%)',width:2,height:106,background:'linear-gradient(to top,#f59e0b,rgba(245,158,11,0.2) 80%,transparent)',borderRadius:2}}/>
-              <div style={{position:'absolute',bottom:98,left:'50%',transform:'translateX(-50%)',width:50,height:50,borderRadius:'50%',background:'rgba(245,158,11,0.09)',border:'2px solid #f59e0b',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 0 28px rgba(245,158,11,0.55)',fontSize:20}}>🎯</div>
-              <div style={{position:'absolute',bottom:148,left:'52%',width:86,height:28,background:'linear-gradient(135deg,#f59e0b,#d97706)',borderRadius:'0 6px 6px 0',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 0 18px rgba(245,158,11,0.45)'}}>
-                <span style={{fontSize:10,fontWeight:800,color:'#1a0900',letterSpacing:1,fontFamily:"'IBM Plex Mono',monospace"}}>GOAL</span>
+          {/* Start — sits on the path line */}
+          {(()=>{
+            const s = getPathPoint(0)
+            const R = 20  // circle radius
+            return (
+              <div style={{position:'absolute', left: s.x - R, top: s.y - R, zIndex:9}}>
+                {/* circle on line */}
+                <div style={{width:R*2,height:R*2,borderRadius:'50%',background:'rgba(16,185,129,0.09)',border:'1.5px solid #10b981',display:'flex',alignItems:'center',justifyContent:'center',fontSize:15}}>🚀</div>
+                {/* stem up */}
+                <div style={{position:'absolute',bottom:'100%',left:'50%',transform:'translateX(-50%)',width:2,height:36,background:'linear-gradient(to bottom,transparent,#10b981)',borderRadius:2}}/>
+                {/* label */}
+                <div style={{position:'absolute',bottom:'100%',left:'50%',transform:'translateX(-50%)',marginBottom:36,whiteSpace:'nowrap',fontSize:9,fontWeight:700,color:'#10b981',fontFamily:"'IBM Plex Mono',monospace",letterSpacing:1}}>START</div>
               </div>
-              <div style={{position:'absolute',bottom:148,left:'52%',width:0,height:0,borderTop:'14px solid transparent',borderBottom:'14px solid transparent',borderRight:'12px solid #92400e',transform:'translateX(-12px)'}}/>
-              <div style={{position:'absolute',bottom:182,left:'50%',transform:'translateX(-50%)',whiteSpace:'nowrap',fontSize:11,fontWeight:800,color:'#f59e0b',textShadow:'0 0 14px rgba(245,158,11,0.85)',fontFamily:"'Syne',sans-serif"}}>{target_role}</div>
-            </div>
-          )})()}
+            )
+          })()}
+
+          {/* Goal — sits on the path line */}
+          {(()=>{
+            const d = getPathPoint(1)
+            const R = 26
+            return (
+              <div style={{position:'absolute', left: d.x - R, top: d.y - R, zIndex:9, animation:'nfloat 3.5s ease-in-out infinite'}}>
+                {/* shadow glow under */}
+                <div style={{position:'absolute',top:'100%',left:'50%',transform:'translateX(-50%)',marginTop:4,width:40,height:10,background:'rgba(245,158,11,0.15)',borderRadius:'50%',filter:'blur(6px)'}}/>
+                {/* circle on line */}
+                <div style={{width:R*2,height:R*2,borderRadius:'50%',background:'rgba(245,158,11,0.09)',border:'2px solid #f59e0b',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 0 28px rgba(245,158,11,0.55)',fontSize:20}}>🎯</div>
+                {/* stem up */}
+                <div style={{position:'absolute',bottom:'100%',left:'50%',transform:'translateX(-50%)',width:2,height:44,background:'linear-gradient(to bottom,transparent,#f59e0b)',borderRadius:2}}/>
+                {/* GOAL banner */}
+                <div style={{position:'absolute',bottom:'100%',left:'50%',transform:'translateX(-50%)',marginBottom:44,display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
+                  <div style={{whiteSpace:'nowrap',fontSize:11,fontWeight:800,color:'#f59e0b',textShadow:'0 0 14px rgba(245,158,11,0.85)',fontFamily:"'Syne',sans-serif"}}>{target_role}</div>
+                  <div style={{background:'linear-gradient(135deg,#f59e0b,#d97706)',borderRadius:6,padding:'3px 14px',boxShadow:'0 0 18px rgba(245,158,11,0.45)'}}>
+                    <span style={{fontSize:10,fontWeight:800,color:'#1a0900',letterSpacing:1,fontFamily:"'IBM Plex Mono',monospace"}}>GOAL</span>
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
         </div>
 
         {/* Depth fades */}
@@ -368,7 +367,7 @@ export default function Roadmap3D() {
         <div style={{position:'absolute',top:0,left:0,right:0,height:100,background:'linear-gradient(to bottom,#06080f,transparent)',zIndex:10,pointerEvents:'none'}}/>
         <div style={{position:'absolute',bottom:0,left:0,right:0,height:80,background:'linear-gradient(to top,#06080f,transparent)',zIndex:10,pointerEvents:'none'}}/>
 
-        {/* [C] HOVER TOOLTIP */}
+        {/* Hover tooltip */}
         {hovered&&(()=>{
           const links=getResources(hovered.node).slice(0,3)
           const c=PC[hovered.node.priority]
@@ -398,7 +397,7 @@ export default function Roadmap3D() {
           )
         })()}
 
-        {/* [B] DRAGGABLE SCRUBBER */}
+        {/* Draggable scrubber */}
         <div style={{position:'absolute',bottom:48,left:'5%',right:'5%',zIndex:15}}>
           <div style={{display:'flex',justifyContent:'space-between',marginBottom:4,padding:'0 2px'}}>
             <span style={{fontSize:9,color:'#1f2937',fontFamily:"'IBM Plex Mono',monospace"}}>START</span>
@@ -528,8 +527,6 @@ export default function Roadmap3D() {
           <div style={{width:1,height:10,background:'rgba(255,255,255,0.05)'}}/>
           <span style={{fontSize:10,color:'#f59e0b',fontWeight:600}}>🎯 {target_role}</span>
         </div>
-
-        {pinned&&<div style={{position:'absolute',top:14,left:'50%',transform:'translateX(-50%)',zIndex:20,background:'rgba(245,158,11,0.07)',border:'1px solid rgba(245,158,11,0.28)',borderRadius:9,padding:'9px 18px',fontSize:11,color:'#f59e0b',fontWeight:600,backdropFilter:'blur(8px)'}}>📌 Roadmap pinned!</div>}
       </div>
 
       <style>{`

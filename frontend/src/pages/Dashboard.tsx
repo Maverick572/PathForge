@@ -23,17 +23,19 @@ export default function Dashboard() {
   const firstName = user?.displayName?.split(' ')[0] || 'there'
 
   const greeting = () => {
-    const h = new Date().getHours()
-    if (h < 12) return 'Good morning'
-    if (h < 17) return 'Good afternoon'
+    // Always compute in IST (UTC+5:30)
+    const now = new Date()
+    const istOffset = 5.5 * 60 * 60 * 1000
+    const istTime = new Date(now.getTime() + istOffset + now.getTimezoneOffset() * 60 * 1000)
+    const h = istTime.getHours()
+    if (h < 12 && h > 3) return 'Good morning'
+    if (h < 17 && h >= 12) return 'Good afternoon'
     return 'Good evening'
   }
 
-  // FIX: pass matchedSkills (stored in Firestore) alongside gapSkills and meta
   function buildSessionPayload(analysis: StoredAnalysis) {
     return {
       gapSkills:     analysis.gapSkills,
-      // matchedSkills is stored in Firestore — use it if available, else []
       matchedSkills: (analysis as any).matchedSkills ?? [],
       targetRole:    analysis.targetRole,
       matchScore:    analysis.matchScore,
@@ -53,30 +55,60 @@ export default function Dashboard() {
 
   const scoreColor = (s: number) => s >= 70 ? '#10b981' : s >= 45 ? '#f59e0b' : '#ef4444'
 
+  // Navbar is fixed at 69px tall (16px top + 16px bottom padding + ~37px content)
+  const NAVBAR_H = 69
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--navy)', display: 'flex' }}>
       <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
 
-      {/* ── SIDEBAR ── */}
-      <div style={{ width: 220, background: 'var(--navy2)', borderRight: '1px solid var(--border)', padding: '28px 0', display: 'flex', flexDirection: 'column', flexShrink: 0, position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 50 }}>
-        <div style={{ fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 20, padding: '0 22px 28px', borderBottom: '1px solid var(--border)', marginBottom: 12, cursor: 'pointer' }} onClick={() => navigate('/')}>
-          Path<span style={{ color: 'var(--cyan)' }}>Forge</span>
-        </div>
+      <Navbar />
 
+      {/* ── SIDEBAR ── */}
+      <div style={{
+        width: 220,
+        background: 'var(--navy2)',
+        borderRight: '1px solid var(--border)',
+        padding: '20px 0',
+        display: 'flex',
+        flexDirection: 'column',
+        flexShrink: 0,
+        position: 'fixed',
+        top: NAVBAR_H,        // start below navbar
+        left: 0,
+        bottom: 0,
+        zIndex: 50,
+      }}>
         {[
           { icon: '⬛', label: 'Dashboard',    path: '/dashboard' },
-          { icon: '🗺',  label: 'My Roadmap',  path: '/roadmap'   },
-          { icon: '📊',  label: 'Skill Gap',   path: '/skillgap'  },
           { icon: '➕',  label: 'New Analysis', path: '/upload'    },
         ].map(item => (
-          <button key={item.path} onClick={() => navigate(item.path)}
-            style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 22px', background: item.path === '/dashboard' ? 'rgba(124,58,237,0.12)' : 'transparent', border: 'none', borderLeft: item.path === '/dashboard' ? '3px solid var(--violet-bright)' : '3px solid transparent', color: item.path === '/dashboard' ? 'var(--white)' : 'var(--muted)', fontSize: 14, cursor: 'pointer', width: '100%', textAlign: 'left', transition: 'all 0.15s' }}>
+          <button
+            key={item.path}
+            onClick={() => navigate(item.path)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10,
+              padding: '11px 22px',
+              background: item.path === '/dashboard' ? 'rgba(124,58,237,0.12)' : 'transparent',
+              border: 'none',
+              borderLeft: item.path === '/dashboard' ? '3px solid var(--violet-bright)' : '3px solid transparent',
+              color: item.path === '/dashboard' ? 'var(--white)' : 'var(--muted)',
+              fontSize: 14, cursor: 'pointer',
+              width: '100%', textAlign: 'left',
+              transition: 'all 0.15s',
+            }}
+          >
             <span style={{ fontSize: 16 }}>{item.icon}</span>
             {item.label}
           </button>
         ))}
 
-        <div style={{ marginTop: 'auto', padding: '20px 22px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{
+          marginTop: 'auto',
+          padding: '20px 22px',
+          borderTop: '1px solid var(--border)',
+          display: 'flex', alignItems: 'center', gap: 10,
+        }}>
           {user?.photoURL && (
             <img src={user.photoURL} alt="" style={{ width: 30, height: 30, borderRadius: '50%', border: '1px solid var(--border)' }} />
           )}
@@ -88,7 +120,14 @@ export default function Dashboard() {
       </div>
 
       {/* ── MAIN ── */}
-      <div style={{ marginLeft: 220, flex: 1, padding: '48px 40px', opacity: visible ? 1 : 0, transition: 'opacity 0.4s ease' }}>
+      <div style={{
+        marginLeft: 220,
+        marginTop: NAVBAR_H,    // push content below navbar
+        flex: 1,
+        padding: '48px 40px',
+        opacity: visible ? 1 : 0,
+        transition: 'opacity 0.4s ease',
+      }}>
 
         <div style={{ marginBottom: 40 }}>
           <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: 28, fontWeight: 800, letterSpacing: '-0.5px', marginBottom: 4 }}>
@@ -96,7 +135,7 @@ export default function Dashboard() {
           </h1>
           <p style={{ color: 'var(--muted)', fontSize: 15 }}>
             {analyses.length > 0
-              ? `You have ${analyses.length} analysis${analyses.length > 1 ? 'ses' : ''} saved.`
+              ? `Showing ${Math.min(analyses.length, 6)} of ${analyses.length} ${analyses.length === 1 ? 'analysis' : 'analyses'}.`
               : 'Run your first analysis to get started.'}
           </p>
         </div>
@@ -127,21 +166,26 @@ export default function Dashboard() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {loading
-                  ? [1,2,3].map(i => <div key={i} style={{ height: 80, background: 'var(--navy2)', border: '1px solid var(--border)', borderRadius: 12, animation: 'pulse 1.5s ease infinite' }} />)
-                  : analyses.map(a => (
-                    <div key={a.id} onClick={() => setSelected(a)}
-                      style={{ background: selected?.id === a.id ? 'rgba(124,58,237,0.1)' : 'var(--navy2)', border: `1px solid ${selected?.id === a.id ? 'rgba(139,92,246,0.5)' : 'var(--border)'}`, borderRadius: 12, padding: '14px 16px', cursor: 'pointer', transition: 'all 0.15s' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--white)' }}>{a.targetRole}</span>
-                        <span style={{ fontSize: 18, fontWeight: 800, color: scoreColor(a.matchScore), fontFamily: "'Syne', sans-serif" }}>{a.matchScore}%</span>
+                  ? [1, 2, 3].map(i => (
+                      <div key={i} style={{ height: 80, background: 'var(--navy2)', border: '1px solid var(--border)', borderRadius: 12, animation: 'pulse 1.5s ease infinite' }} />
+                    ))
+                  : analyses.slice(0, 6).map(a => (
+                      <div
+                        key={a.id}
+                        onClick={() => setSelected(a)}
+                        style={{ background: selected?.id === a.id ? 'rgba(124,58,237,0.1)' : 'var(--navy2)', border: `1px solid ${selected?.id === a.id ? 'rgba(139,92,246,0.5)' : 'var(--border)'}`, borderRadius: 12, padding: '14px 16px', cursor: 'pointer', transition: 'all 0.15s' }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--white)' }}>{a.targetRole}</span>
+                          <span style={{ fontSize: 18, fontWeight: 800, color: scoreColor(a.matchScore), fontFamily: "'Syne', sans-serif" }}>{a.matchScore}%</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <span style={{ fontSize: 11, color: 'var(--muted)' }}>✓ {a.matchedCount} matched</span>
+                          <span style={{ fontSize: 11, color: '#ef4444' }}>✗ {a.gapCount} gaps</span>
+                          <span style={{ fontSize: 11, color: 'var(--muted)', marginLeft: 'auto' }}>{relativeTime(a.createdAt)}</span>
+                        </div>
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <span style={{ fontSize: 11, color: 'var(--muted)' }}>✓ {a.matchedCount} matched</span>
-                        <span style={{ fontSize: 11, color: '#ef4444' }}>✗ {a.gapCount} gaps</span>
-                        <span style={{ fontSize: 11, color: 'var(--muted)', marginLeft: 'auto' }}>{relativeTime(a.createdAt)}</span>
-                      </div>
-                    </div>
-                  ))
+                    ))
                 }
               </div>
             </div>

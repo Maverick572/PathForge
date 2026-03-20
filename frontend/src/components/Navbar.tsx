@@ -26,19 +26,6 @@ export default function Navbar() {
         Path<span style={{ color: 'var(--cyan)' }}>Forge</span>
       </div>
 
-      {/* Nav links */}
-      <ul style={{ display: 'flex', alignItems: 'center', gap: 32, listStyle: 'none' }}>
-        {['How it works', 'Features', 'About'].map(item => (
-          <li key={item}>
-            <a href="#" style={{
-              color: 'var(--muted)', textDecoration: 'none',
-              fontSize: 14, fontWeight: 500,
-              transition: 'color 0.2s',
-            }}>{item}</a>
-          </li>
-        ))}
-      </ul>
-
       {/* Auth area */}
       {user ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
