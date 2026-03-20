@@ -91,22 +91,7 @@ export default function Landing() {
         gap: 60,
       }}>
         <div style={{ flex: 1, maxWidth: 600 }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            background: 'rgba(124,58,237,0.15)',
-            border: '1px solid rgba(139,92,246,0.35)',
-            borderRadius: 100, padding: '6px 14px',
-            fontSize: 12, fontWeight: 500, color: 'var(--violet-glow)',
-            marginBottom: 28, letterSpacing: '0.5px', textTransform: 'uppercase',
-            animation: 'fadeUp 0.8s 0.2s ease both',
-          }}>
-            <span style={{
-              width: 6, height: 6, borderRadius: '50%',
-              background: 'var(--cyan)', animation: 'pulse 2s infinite',
-              display: 'inline-block',
-            }} />
-            ✦ Powered by AI — built for humans
-          </div>
+          
 
           <h1 style={{
             fontFamily: "'Syne', sans-serif",
